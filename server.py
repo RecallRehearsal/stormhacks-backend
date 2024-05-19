@@ -1,9 +1,17 @@
+import os
 from fastapi import FastAPI, File, UploadFile
-from consts import DATA_DIR
-
+from fastapi.responses import FileResponse
+from openai import OpenAI
+from consts import DATA_DIR, PDF_PATH, AUDIO_PATH
+from pdf import load_pdfs
+import whisper
 
 # Init API
 app = FastAPI()
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
 
 
 # Base Routes
@@ -13,6 +21,61 @@ async def root():
 
 
 # Unity Processing Routes
+@app.post("/processAnswer")
+def upload(file: UploadFile = File(...)):
+    # Save Wav File
+    file_location = DATA_DIR + AUDIO_PATH + file.filename
+    try:
+        contents = file.file.read()
+        with open(file_location, 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+    finally:
+        file.file.close()
+
+    print("Successfully uploaded file: ", file_location)
+
+    # Process Wav File
+    try:
+        with open(file_location, "rb") as f:
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1",
+                response_format="text",
+                file=f,
+            )
+
+            print("Successfully created transcription.\nResulting Transcription: ", transcription)
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": transcription},
+                ]
+            )
+
+            print("Successfully created response.\nResulting Response: ", response)
+
+            speech_file_path = DATA_DIR + AUDIO_PATH + "speech.mp3"
+            audio_response = client.audio.speech.create(
+                model="tts-1",
+                voice="onyx",
+                input=response.choices[0].message.content
+            )
+
+            print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
+
+            audio_response.stream_to_file(speech_file_path)
+        return FileResponse(speech_file_path, media_type="audio/wav")
+
+    except Exception as e:
+        print(e)
+        return {"message": "There was an error creating the file"}
+
+    return {"message": "There was an error creating the response"}
+
+
 
 
 # PDF Processing Routes
@@ -20,12 +83,13 @@ async def root():
 def upload(file: UploadFile = File(...)):
     try:
         contents = file.file.read()
-        with open(DATA_DIR + '/' + file.filename, 'wb') as f:
+        with open(DATA_DIR + '/' + PDF_PATH + "/" + file.filename, 'wb') as f:
             f.write(contents)
     except Exception:
         return {"message": "There was an error uploading the file"}
     finally:
         file.file.close()
 
-    return {"message": f"Successfully uploaded {file.filename}"}
+    load_pdfs()
 
+    return {"message": f"Successfully uploaded {file.filename}"}
