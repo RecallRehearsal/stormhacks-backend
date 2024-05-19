@@ -1,3 +1,5 @@
+import time
+
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
@@ -37,13 +39,16 @@ def save_to_chroma(chunks: list[Document]):
     if os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
 
-    # Create a new DB from the documents.
-    db = Chroma.from_documents(
-        chunks, OpenAIEmbeddings(), persist_directory=CHROMA_PATH
-    )
+    try:
+        # Create a new DB from the documents.
+        db = Chroma.from_documents(
+            chunks, OpenAIEmbeddings(), persist_directory=CHROMA_PATH
+        )
 
-    db.persist()
-    print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
+        db.persist()
+        print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
+    except:
+        print("Error saving to Chroma.")
 
 
 def generate_questions(client, input_text):

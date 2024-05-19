@@ -2,60 +2,94 @@ DATA_DIR = 'static/'
 CHROMA_PATH = 'chroma/'
 PDF_PATH = 'pdf/'
 AUDIO_PATH = 'wav/'
+SCORE_THRESH = 60
 
+QUESTION_PROMPT = (
+    """
+    Given an academic lecture in PDF format (5-10 pages long) provided by the student, generate diverse and in-depth questions to evaluate a university student's understanding in preparation for their final exam. The lecture delves moderately into applications and theories. Follow these guidelines:
+    1. Extract 4-5 broad learning goals that comprehensively cover the content of the lecture.
+    2. For each learning goal, generate 1-2 very simple questions (Using simple language like a 5 year old) suitable for a  student to introduce the learning goal. These questions should be easy enough for anyone to understand.
+    3. For each learning goal, generate 2-3 complex, short-answer questions to thoroughly test the student's understanding of the goal.
+    Additionally, make sure your reply ONLY with json and that you follow the following json format EXACTLY.\n'
+    {
+      "learning_goals": [
+        {
+          "goal name": [
+            {
+              "Introductory Questions": ["q1", "q2"]
+            },
+            {
+              "Complex Questions": ["q3", "q4", "q5"]
+            }
+          ]
+        },
+        {
+          "goal name": [
+            {
+              "Introductory Questions": ["q1", "q2"]
+            },
+            {
+              "Complex Questions": ["q3", "q4", "q5"]
+            }
+          ]
+        },
+        {
+          "goal name": [
+            {
+              "Introductory Questions": ["q1", "q2"]
+            },
+            {
+              "Complex Questions": ["q3", "q4", "q5"]
+            }
+          ]
+        },
+        {
+          "goal name": [
+            {
+              "Introductory Questions": ["q1", "q2"]
+            },
+            {
+              "Complex Questions": ["q3", "q4", "q5"]
+            }
+          ]
+        }
+      ]
+    }
+    """
+)
 
-QUESTION_PROMPT = ('Given the following input text, generate diverse and in-depth questions to test a university '
-          'student\'s knowledge and understanding of a given document of text,'
-          'approximately 25 pages long. Follow these steps:  1. Identify 5-6 broader '
-          'learning goals that comprehensively cover all the major topics in the text. 2. For each learning goal: '
-          '    a. Create 2-3 simple and introductory questions.     b. Develop 3-5 harder and more complex '
-          'questions to thoroughly test the student\'s understanding through qualitative analysis and factual '
-          'knowledge. 3. Ensure the questions are short to medium length answer format. 4. Segment the document '
-          'by topics to ensure comprehensive coverage. 5. Make sure the learning goals encompass the entire '
-          'content of the text, aiming at university difficulty level for students aged 19-23. Additionally, '
-          'make sure your reply ONLY with json and that you follow the following json format EXACTLY.\n'
-              '''{
-                  "learning goals": [
-                    {
-                      "goal name": [
-                        {
-                          "Introductory Questions": ["q1", "q2"]
-                        },
-                        {
-                          "Complex Questions": ["q3", "q4", "q5"]
-                        }
-                      ]
-                    },
-                    {
-                      "goal name": [
-                        {
-                          "Introductory Questions": ["q1", "q2"]
-                        },
-                        {
-                          "Complex Questions": ["q3", "q4", "q5"]
-                        }
-                      ]
-                    },
-                    {
-                      "goal name": [
-                        {
-                          "Introductory Questions": ["q1", "q2"]
-                        },
-                        {
-                          "Complex Questions": ["q3", "q4", "q5"]
-                        }
-                      ]
-                    },
-                    {
-                      "goal name": [
-                        {
-                          "Introductory Questions": ["q1", "q2"]
-                        },
-                        {
-                          "Complex Questions": ["q3", "q4", "q5"]
-                        }
-                      ]
-                    }
-                  ]
-                }
-                ''')
+ANSWER_PROMPT = """
+Assess the answer to the question below based only on the following context:
+
+{context}
+
+---
+
+Assess the answer to this question based on the above context: 
+
+{question}
+
+--
+Assess this answer to the question above concisely and in simple english. Avoid repeating the answer and question in your answer:
+
+{answer}
+
+"""
+
+ANSWER_PROMPT2 = """
+Assess the answer to the question below and calculate a correctness score (0-100) based only on the following context:
+
+{context}
+
+---
+
+Assess the answer to this question and calculate a correctness score (0-100) based on the above context: 
+
+{question}
+
+--
+Assess this answer to the question above AND calculate a correctness score (0-100). Return only a single number as the score and nothing else.
+
+{answer}
+
+"""
