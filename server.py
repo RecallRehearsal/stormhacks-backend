@@ -95,12 +95,11 @@ def processAnswer(file: UploadFile = File(...)):
             print("Successfully calculated accuracy.\nResulting Response: ", accuracy.choices[0].message.content)
             accuracy_num = int(accuracy.choices[0].message.content)
 
-            #speech_file_path = DATA_DIR + AUDIO_PATH + "speech.mp3"
             speech_file_path = "static/speech.mp3"
             audio_response = client.audio.speech.create(
                 model="tts-1",
-                voice="shimmer" if state.curr_question < 2 else "echo",
-                input=response.choices[0].message.content + ("Let's Try that again!" if accuracy_num<SCORE_THRESH else "Let's Continue to the next question")
+                voice="nova" if state.curr_question < 2 else "echo",
+                input=response.choices[0].message.content + ("Let's Try that again! " + getQuestion() if accuracy_num<SCORE_THRESH else "Let's Continue to the next question")
             )
 
             print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
@@ -129,8 +128,24 @@ def generateQuestionAudio():
         speech_file_path = "static/speech.mp3"
         audio_response = client.audio.speech.create(
             model="tts-1",
-            voice="shimmer" if state.curr_question < 2 else "echo",
+            voice="nova" if state.curr_question < 2 else "echo",
             input=prompt
+        )
+        print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
+        audio_response.stream_to_file(speech_file_path)
+    except:
+        print(state.curr_goal, state.curr_question)
+        return {"message": "There was an error creating the file"}
+    return {"message": "success"}
+
+@app.get("/generateIntro")
+def generateIntro():
+    try:
+        speech_file_path = "static/speech.mp3"
+        audio_response = client.audio.speech.create(
+            model="tts-1",
+            voice="nova" if state.curr_question < 2 else "echo",
+            input="Welcome to Recall Rehearsal. We're here to help you rehearse for your exam. Let's get recalling with your first question."
         )
         print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
         audio_response.stream_to_file(speech_file_path)

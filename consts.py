@@ -70,7 +70,7 @@ Assess the answer leniently to this question based on the above context:
 {question}
 
 --
-Assess this answer leniently and in the perspective of a 5 year old in simple english. Avoid repeating the answer and question in your answer and make sure to keep it simple: 
+Assess this answer leniently and in the perspective of a 5 year old in simple english.If they are correct, don't provide an explanation. But if they are wrong, give them hints to get the question correct. Avoid repeating the answer and question in your response and make sure to keep it simple without giving too many hints: 
 
 {answer}
 
@@ -88,7 +88,7 @@ Assess the answer to this question based on the above context:
 {question}
 
 --
-Assess this answer to the question above concisely and in simple english. Avoid repeating the answer and question in your answer. Strictly limit your answer to 3 sentences:
+Assess this answer to the question above concisely and in simple english. If they are correct, don't provide an explanation but if they are incorrect feel free to give them hint. Avoid repeating the answer and question in your response and make sure to keep it simple without giving too many hints. Strictly limit your answer to 3 sentences:
 
 {answer}
 
