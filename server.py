@@ -4,6 +4,10 @@ from openai import OpenAI
 from consts import DATA_DIR, PDF_PATH, AUDIO_PATH
 from fastapi.staticfiles import StaticFiles
 from pdf import generate_data_store, generate_questions
+import json
+
+class state:
+    chatHistory = []
 
 # Init API
 app = FastAPI()
@@ -80,13 +84,14 @@ def upload(file: UploadFile = File(...)):
 
 
 
-
+# For Unity to call to initialize the questions and data store
 @app.get("/initialize")
 def init():
-    generate_data_store()
-    questions = generate_questions()
-
-    return {"message": "Server Initialized"}
+    input_text = generate_data_store()
+    questions = generate_questions(client, input_text)
+    print(questions)
+    print(type(questions))
+    return json.loads(questions)
 
 
 # PDF Processing Routes
@@ -94,7 +99,7 @@ def init():
 def upload(file: UploadFile = File(...)):
     try:
         contents = file.file.read()
-        with open(DATA_DIR + '/' + PDF_PATH + "/" + file.filename, 'wb') as f:
+        with open(DATA_DIR + '/' + PDF_PATH + "/" + data.pdf, 'wb') as f:
             f.write(contents)
     except Exception:
         return {"message": "There was an error uploading the file"}
