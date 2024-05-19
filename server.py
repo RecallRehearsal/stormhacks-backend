@@ -3,7 +3,8 @@ from fastapi import FastAPI, File, UploadFile
 from langchain.chains.flare.prompts import PROMPT_TEMPLATE
 from langchain_core.prompts import ChatPromptTemplate
 from openai import OpenAI
-from consts import DATA_DIR, PDF_PATH, AUDIO_PATH, ANSWER_PROMPT, ANSWER_PROMPT2, SCORE_THRESH
+from consts import DATA_DIR, PDF_PATH, AUDIO_PATH, SCORE_THRESH, HELP_PROMPT, \
+    ANSWER_PROMPT_CHILD, ANSWER_PROMPT_STUDENT, ACCURACY_PROMPT_CHILD, ACCURACY_PROMPT_STUDENT
 from fastapi.staticfiles import StaticFiles
 from pdf import generate_data_store, generate_questions
 import json
@@ -69,7 +70,7 @@ def processAnswer(file: UploadFile = File(...)):
 
             print("Successfully created transcription.\nResulting Transcription: ", transcription)
 
-            prompt_template = ChatPromptTemplate.from_template(ANSWER_PROMPT)
+            prompt_template = ChatPromptTemplate.from_template(ANSWER_PROMPT_CHILD if state.curr_question < 2 else ANSWER_PROMPT_STUDENT)
             prompt = prompt_template.format(context=state.input_text, question=getQuestion(), answer=transcription)
 
             response = client.chat.completions.create(
@@ -81,10 +82,9 @@ def processAnswer(file: UploadFile = File(...)):
 
             print("Successfully created response.\nResulting Response: ", response.choices[0].message.content)
 
-            prompt_template_accuracy = ChatPromptTemplate.from_template(ANSWER_PROMPT2)
+            prompt_template_accuracy = ChatPromptTemplate.from_template(ACCURACY_PROMPT_CHILD if state.curr_question < 2 else ACCURACY_PROMPT_STUDENT)
             prompt_accuracy = prompt_template_accuracy.format(context=state.input_text, question=getQuestion(),
                                                               answer=transcription)
-
             accuracy = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
@@ -135,6 +135,7 @@ def generateQuestionAudio():
         print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
         audio_response.stream_to_file(speech_file_path)
     except:
+        print(state.curr_goal, state.curr_question)
         return {"message": "There was an error creating the file"}
     return {"message": "success"}
 
@@ -165,30 +166,30 @@ def getHelp(file: UploadFile = File(...)):
 
             print("Successfully created transcription.\nResulting Transcription: ", transcription)
 
+            prompt_template = ChatPromptTemplate.from_template(HELP_PROMPT)
+            prompt = prompt_template.format(context=state.input_text, question=getQuestion(), inquiry=transcription)
+            print(prompt)
+
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system",
-                     "content": "You are a helpful assistant. Answer the following question in 3 sentences or less."},
-                    {"role": "user", "content": transcription},
+                    {"role": "user", "content": prompt},
                 ]
             )
 
-            print("Successfully created response.\nResulting Response: ", response)
+            print("Successfully created help response.\nResulting Response: ", response.choices[0].message.content)
 
-            #speech_file_path = DATA_DIR + AUDIO_PATH + "speech.mp3"
             speech_file_path = "static/speech.mp3"
             audio_response = client.audio.speech.create(
                 model="tts-1",
                 voice="onyx",
-                input=response.choices[0].message.content
+                input="No problem, I am glad to help. " + response.choices[0].message.content + " I hope this helps you understand the question better."
             )
 
             print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
             audio_response.stream_to_file(speech_file_path)
 
         return {"message": speech_file_path}
-        #return FileResponse(speech_file_path, media_type="audio/mp3")
 
     except Exception as e:
         print(e)

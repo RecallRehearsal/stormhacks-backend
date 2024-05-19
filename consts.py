@@ -58,7 +58,25 @@ QUESTION_PROMPT = (
     """
 )
 
-ANSWER_PROMPT = """
+ANSWER_PROMPT_CHILD = """
+Assess the answer leniently to the question below based only on the following context:
+
+{context}
+
+---
+
+Assess the answer leniently to this question based on the above context: 
+
+{question}
+
+--
+Assess this answer leniently and in the perspective of a 5 year old in simple english. Avoid repeating the answer and question in your answer and make sure to keep it simple: 
+
+{answer}
+
+"""
+
+ANSWER_PROMPT_STUDENT = """
 Assess the answer to the question below based only on the following context:
 
 {context}
@@ -70,13 +88,31 @@ Assess the answer to this question based on the above context:
 {question}
 
 --
-Assess this answer to the question above concisely and in simple english. Avoid repeating the answer and question in your answer:
+Assess this answer to the question above concisely and in simple english. Avoid repeating the answer and question in your answer. Strictly limit your answer to 3 sentences:
 
 {answer}
 
 """
 
-ANSWER_PROMPT2 = """
+ACCURACY_PROMPT_CHILD = """
+Assess the answer to the question below and calculate a correctness score (0-100) based only on the following context:
+
+{context}
+
+---
+
+Assess the answer leniently to this question and calculate a correctness score (0-100) based on the above context: 
+
+{question}
+
+--
+Assess this answer leniently to the question above AND calculate a correctness score (0-100). Return only a single number as the score and nothing else.
+
+{answer}
+
+"""
+
+ACCURACY_PROMPT_STUDENT = """
 Assess the answer to the question below and calculate a correctness score (0-100) based only on the following context:
 
 {context}
@@ -91,5 +127,25 @@ Assess the answer to this question and calculate a correctness score (0-100) bas
 Assess this answer to the question above AND calculate a correctness score (0-100). Return only a single number as the score and nothing else.
 
 {answer}
+
+"""
+
+
+HELP_PROMPT = """
+provide a helpful and concise (2-3 sentences) answer to the question below based only on the following context:
+
+{context}
+
+---
+
+This is the question the user is being asked to answer:
+
+{question}
+
+---
+
+provide a helpful and concise (2-3 sentences) answer to this question based on the above context: 
+
+{inquiry}
 
 """
