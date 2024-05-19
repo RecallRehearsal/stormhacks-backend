@@ -1,11 +1,9 @@
 import os
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse
 from openai import OpenAI
 from consts import DATA_DIR, PDF_PATH, AUDIO_PATH
 from fastapi.staticfiles import StaticFiles
-from pdf import load_pdfs
-import whisper
+from pdf import generate_data_store, generate_questions
 
 # Init API
 app = FastAPI()
@@ -80,6 +78,15 @@ def upload(file: UploadFile = File(...)):
     return {"message": "There was an error creating the response"}
 
 
+
+
+
+@app.get("/initialize")
+def init():
+    generate_data_store()
+    questions = generate_questions()
+
+    return {"message": "Server Initialized"}
 
 
 # PDF Processing Routes
