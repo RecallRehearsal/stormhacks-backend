@@ -3,13 +3,15 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import FileResponse
 from openai import OpenAI
 from consts import DATA_DIR, PDF_PATH, AUDIO_PATH
+from fastapi.staticfiles import StaticFiles
 from pdf import load_pdfs
 import whisper
 
 # Init API
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 client = OpenAI(
-    # This is the default and can be omitted
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
@@ -50,14 +52,15 @@ def upload(file: UploadFile = File(...)):
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "system", "content": "You are a helpful assistant. Answer the following question in 3 sentences or less."},
                     {"role": "user", "content": transcription},
                 ]
             )
 
             print("Successfully created response.\nResulting Response: ", response)
 
-            speech_file_path = DATA_DIR + AUDIO_PATH + "speech.mp3"
+            #speech_file_path = DATA_DIR + AUDIO_PATH + "speech.mp3"
+            speech_file_path = "static/speech.mp3"
             audio_response = client.audio.speech.create(
                 model="tts-1",
                 voice="onyx",
@@ -65,9 +68,10 @@ def upload(file: UploadFile = File(...)):
             )
 
             print("Successfully created speech from text.\nResulting audio file saved at: ", speech_file_path)
-
             audio_response.stream_to_file(speech_file_path)
-        return FileResponse(speech_file_path, media_type="audio/wav")
+
+        return {"message": speech_file_path}
+        #return FileResponse(speech_file_path, media_type="audio/mp3")
 
     except Exception as e:
         print(e)
@@ -90,6 +94,6 @@ def upload(file: UploadFile = File(...)):
     finally:
         file.file.close()
 
-    load_pdfs()
+    #load_pdfs()
 
     return {"message": f"Successfully uploaded {file.filename}"}
